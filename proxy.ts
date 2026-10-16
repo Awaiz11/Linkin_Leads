@@ -40,9 +40,6 @@ export function proxy(request: NextRequest) {
 }
 
 // ── Matcher: protect ALL frontend pages, but NEVER /api/* routes ──────────────
-// The negative lookahead skips: api routes, Next.js internals, and static assets
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
