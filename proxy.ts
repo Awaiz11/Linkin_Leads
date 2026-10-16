@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // ── Credentials (change these via env vars in Vercel dashboard) ───────────────
@@ -6,6 +6,13 @@ const USERNAME = process.env.AUTH_USERNAME ?? 'admin';
 const PASSWORD = process.env.AUTH_PASSWORD ?? 'leadflow123';
 
 export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // ── 1. Strictly EXCLUDE /api routes (specifically /api/leads) and preflights from Basic Auth
+  if (pathname.startsWith('/api') || request.method === 'OPTIONS') {
+    return NextResponse.next();
+  }
+
   const authHeader = request.headers.get('authorization');
 
   if (authHeader) {

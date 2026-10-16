@@ -8,13 +8,13 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // CORS headers zaroori hote hain Extension se connection ke liye
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-// Yeh OPTIONS block CORS error rokne ke liye hai
+// Yeh OPTIONS block preflight CORS request handle karta hai
 export async function OPTIONS() {
-    return NextResponse.json({}, { headers: corsHeaders });
+    return new NextResponse(null, { status: 204, headers: corsHeaders });
 }
 
 export async function POST(request: Request) {
