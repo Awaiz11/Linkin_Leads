@@ -8,7 +8,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // CORS headers zaroori hote hain Extension se connection ke liye
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
@@ -44,10 +44,36 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
         }
 
-        return NextResponse.json({ success: true, message: 'Lead saved successfully!' }, { headers: corsHeaders });
+        return NextResponse.json({ success: true, message: 'Lead saved successfully!' }, { status: 200, headers: corsHeaders });
 
     } catch (error: any) {
         console.error("API Error:", error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
+    }
+}
+
+export async function DELETE(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ success: false, error: 'Lead ID is required' }, { status: 400, headers: corsHeaders });
+        }
+
+        const { error } = await supabase
+            .from('leads')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error("Supabase Delete Error:", error);
+            return NextResponse.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
+        }
+
+        return NextResponse.json({ success: true, message: 'Lead deleted successfully!' }, { status: 200, headers: corsHeaders });
+    } catch (error: any) {
+        console.error("Delete API Error:", error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
     }
 }
