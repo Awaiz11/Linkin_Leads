@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -80,6 +80,36 @@ export default function LeadsTable({
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
   const router = useRouter();
 
+  // 1. Sync internal state whenever server sends updated initialLeads
+  useEffect(() => {
+    if (!deletingId) {
+      setLeads(initialLeads);
+    }
+  }, [initialLeads, deletingId]);
+
+  // 2. Client-side polling mechanism: refresh data every 3 seconds & on tab focus
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Only refresh if tab is currently visible to save bandwidth
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        router.refresh();
+      }
+    }, 3000);
+
+    const handleFocus = () => {
+      router.refresh();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [router]);
+
   async function handleDelete(id: string | number) {
     if (!window.confirm('Are you sure you want to delete this lead?')) {
       return;
@@ -117,9 +147,16 @@ export default function LeadsTable({
     <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-900/5">
       {/* Card header */}
       <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">All Leads</h2>
-          <p className="mt-0.5 text-xs text-gray-400">{leads.length} contacts saved</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">All Leads</h2>
+            <p className="mt-0.5 text-xs text-gray-400">{leads.length} contacts saved</p>
+          </div>
+          {/* Live Sync badge */}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/60">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Live Sync
+          </span>
         </div>
         {hasError && (
           <span className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 ring-1 ring-red-200">
@@ -216,7 +253,7 @@ export default function LeadsTable({
                     </div>
                     <p className="font-medium text-gray-500">No leads yet</p>
                     <p className="text-xs">
-                      Save leads from LinkedIn using the extension and they&apos;ll appear here.
+                      Save leads from LinkedIn using the extension and they&apos;ll appear here automatically.
                     </p>
                   </div>
                 </td>
@@ -229,7 +266,7 @@ export default function LeadsTable({
       {/* Footer */}
       {leads && leads.length > 0 && (
         <div className="border-t border-gray-100 bg-gray-50/50 px-6 py-3 text-xs text-gray-400">
-          Showing {leads.length} lead{leads.length !== 1 ? 's' : ''} · Sorted by newest first
+          Showing {leads.length} lead{leads.length !== 1 ? 's' : ''} · Sorted by newest first · Auto-refreshes every 3s
         </div>
       )}
     </div>
